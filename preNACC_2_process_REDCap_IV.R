@@ -42,10 +42,34 @@ records_ivp <- records_ivp_raw %>% paste(collapse = ",")
 
 # GET REDCap DATA via API ----
 
+forms_ivp_raw <-
+  c(
+    "header"
+    , "ivp_a1"
+    , "ivp_a2"
+    , "ivp_a3"
+    , "ivp_a4"
+    , "ivp_a5"
+    , "ivp_b1"
+    , "ivp_b4"
+    , "ivp_b5"
+    , "ivp_b6"
+    , "ivp_b7"
+    , "ivp_b8"
+    , "ivp_b9"
+    , "ivp_c2"
+    , "ivp_d1"
+    , "ivp_d2"
+    , "ivp_z1"
+  )
+
+forms_ivp <- forms_ivp_raw %>% paste(collapse = ",")
+
 # Get the JSON
 json_ivp <- 
   get_rc_data_api(uri     = REDCAP_API_URI,
                   token   = REDCAP_API_TOKEN_UDS3n,
+                  forms   = forms_ivp,
                   records = records_ivp,
                   vp      = FALSE)
 
@@ -57,6 +81,8 @@ df_ivp_raw <- jsonlite::fromJSON(json_ivp) %>% as_tibble() %>%  na_if("")
 
 # Get records that are ready for NACC
 df_ivp <- df_ivp_raw %>% 
+  select(-dob, -mrn, -madc_id, -cues_id, -tb_id, -cues_tbid, 
+         -paper_visit_num) %>% 
   filter(redcap_event_name == "visit_1_arm_1",
          str_detect(redcap_event_name, "visit_\\d{1,2}_arm_1")) %>% 
   filter(header_complete == 2

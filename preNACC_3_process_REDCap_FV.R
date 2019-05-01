@@ -42,10 +42,36 @@ records_fvp <- records_fvp_raw %>% paste(collapse = ",")
 
 # GET REDCap DATA via API ----
 
+forms_fvp_raw <-
+  c(
+    "header"
+    , "ivp_a1" # needed for NACCulator to work
+    , "fvp_a1"
+    , "fvp_a2"
+    , "fvp_a3"
+    , "fvp_a4"
+    , "fvp_a5"
+    , "fvp_b1"
+    , "fvp_b4"
+    , "fvp_b5"
+    , "fvp_b6"
+    , "fvp_b7"
+    , "fvp_b8"
+    , "fvp_b9"
+    , "fvp_c1"
+    , "fvp_c2"
+    , "fvp_d1"
+    , "fvp_d2"
+    , "fvp_z1"
+  )
+
+forms_fvp <- forms_fvp_raw %>% paste(collapse = ",")
+
 # Get the JSON
 json_fvp <- 
   get_rc_data_api(uri     = REDCAP_API_URI,
                   token   = REDCAP_API_TOKEN_UDS3n,
+                  forms   = forms_fvp,
                   records = records_fvp,
                   vp      = FALSE)
 
@@ -57,6 +83,8 @@ df_fvp_raw <- jsonlite::fromJSON(json_fvp) %>% as_tibble() %>%  na_if("")
 
 # Get records that are ready for NACC
 df_fvp <- df_fvp_raw %>% 
+  select(-dob, -mrn, -madc_id, -cues_id, -tb_id, -cues_tbid,
+         -paper_visit_num) %>% 
   filter(redcap_event_name != "visit_1_arm_1",
          str_detect(redcap_event_name, "visit_\\d{1,2}_arm_1")) %>% 
   filter(header_complete == 2
