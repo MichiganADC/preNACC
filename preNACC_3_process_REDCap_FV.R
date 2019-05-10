@@ -17,10 +17,11 @@
 
 
 # USEFUL LIBRARIES ----
-library(dplyr)
-library(readr)
-library(stringr)
-library(lubridate)
+suppressMessages( library(dplyr) )
+suppressMessages( library(readr) )
+suppressMessages( library(crayon) )
+suppressMessages( library(stringr) )
+suppressMessages( library(lubridate) )
 
 
 # USEFUL GLOBALS AND FUNCTIONS ----

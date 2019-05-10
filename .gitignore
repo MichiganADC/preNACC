@@ -10,11 +10,8 @@
 *.doc
 *.docx
 *.pdf
-*.eml
-*visit_record_data.R
-*visit_num_reconcile.R
-*config*
+*2018-*
+*2019-*
+*visit_num_reconcile*
 *old*
-*reconcile_2019*
-*NACC_REDCap_reconcile*
 *data_to_naomi*

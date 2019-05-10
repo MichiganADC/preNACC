@@ -17,10 +17,11 @@
 
 
 # USEFUL LIBRARIES ----
-library(dplyr)
-library(readr)
-library(stringr)
-library(lubridate)
+suppressMessages( library(dplyr) )
+suppressMessages( library(readr) )
+suppressMessages( library(crayon) )
+suppressMessages( library(stringr) )
+suppressMessages( library(lubridate) )
 
 
 # USEFUL GLOBALS AND FUNCTIONS ----
@@ -162,8 +163,8 @@ system(
   command = 
     paste0("PYTHONPATH=", ncltr_path, 
            " ", ncltr_path, "nacc/redcap2nacc.py", 
-           " -f fixHeaders", 
-           " -meta ", ncltr_path, "nacculator_cfg_mich.ini", 
+           " -f fixHeaders",
+           " -meta ", ncltr_path, "nacculator_cfg_mich.ini",
            " < ", prenacc_path, 
            "'NACCulator ", DATE_CHAR, 
            "'/NACC_UDS3_ivp_", DATE_CHAR, ".csv",
