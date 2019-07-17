@@ -17,14 +17,16 @@
 
 
 # USEFUL LIBRARIES ----
+suppressMessages( library(crayon) )
+cat(green("Loading R packages...\n"))
 suppressMessages( library(dplyr) )
 suppressMessages( library(readr) )
-suppressMessages( library(crayon) )
 suppressMessages( library(stringr) )
 suppressMessages( library(lubridate) )
 
 
 # USEFUL GLOBALS AND FUNCTIONS
+cat(green("Loading globals and helper functions...\n"))
 source("~/Box Sync/Documents/R_helpers/config.R")
 source("~/Box Sync/Documents/R_helpers/helpers.R")
 DATE_CHAR <- as.character(Sys.Date())
@@ -41,6 +43,7 @@ DATE_CHAR <- as.character(Sys.Date())
 # - Include headers
 
 # Find latest NACC Form A1 CSV
+cat(green("Retrieving latest NACC Form A1 CSV...\n"))
 df_nacc_a1_csvs <- 
   file.info(paste0("./NACC_A1_data/", list.files("./NACC_A1_data/"))) %>% 
   as_tibble(rownames = "filepath") %>%
@@ -87,7 +90,7 @@ df_nacc_a1_cln <- df_nacc_a1 %>%
             visitnum = VISITNUM)
 
 # _ REDCap UDS 3 data ----
-
+cat(green("Retrieving latest UDS 3 data via REDCap API...\n"))
 fields_u3_raw <-
   c(
     "ptid"
@@ -129,6 +132,9 @@ df_u3_cln <- df_u3 %>%
 
 
 # GET PARTICIPANT-VISITS TO MATCH, UPLOAD, OR RESOLVE ----
+
+cat(green(
+  "Processing participant-visit records to match, upload, or resolve...\n"))
 
 #              NACC
 #         | No  || Yes |
@@ -173,11 +179,12 @@ df_redcap_yes_nacc_yes_2 <-
   arrange(ptid, form_date, visitnum)
 # Verify that these match
 n <- nrow(df_redcap_yes_nacc_yes_1)
-identical(head(df_redcap_yes_nacc_yes_1, n), 
-          head(df_redcap_yes_nacc_yes_2, n))
+# identical(head(df_redcap_yes_nacc_yes_1, n), 
+#           head(df_redcap_yes_nacc_yes_2, n))
 
 
 # WRITE DFs TO CSV ----
+cat(green("Writing relevant data frames to CSV...\n"))
 if (!dir.exists(paste0("./NACCulator ", DATE_CHAR))) {
   system(command = paste0("mkdir ",
                           "~/'Box Sync'/Documents/preNACC/",
@@ -201,6 +208,8 @@ write_csv(df_redcap_yes_nacc_no,
           paste0("./NACCulator ", DATE_CHAR, "/",
                  "df_redcap_yes_nacc_no_", DATE_CHAR, ".csv"), 
           na = "")
+
+cat(cyan("\nDone.\n\n"))
 
 
 ###@    #==--  :  --==#    @##==---==##@##==---==##@    #==--  :  --==#    @###

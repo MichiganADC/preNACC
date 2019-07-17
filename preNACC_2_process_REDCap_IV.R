@@ -17,24 +17,28 @@
 
 
 # USEFUL LIBRARIES ----
+suppressMessages( library(crayon) )
+cat(green("Loading R packages...\n"))
 suppressMessages( library(dplyr) )
 suppressMessages( library(readr) )
-suppressMessages( library(crayon) )
 suppressMessages( library(stringr) )
 suppressMessages( library(lubridate) )
 
 
 # USEFUL GLOBALS AND FUNCTIONS ----
+cat(green("Loading globals and helper functions...\n"))
 source("~/Box Sync/Documents/R_helpers/config.R")
 source("~/Box Sync/Documents/R_helpers/helpers.R")
 DATE_CHAR <- as.character(Sys.Date())
 
 
 # LOAD INITIAL VISIT RECORDS ----
+cat(green("Loading initial visit records...\n"))
 records_ivp_raw <-
   read_csv(paste0("~/Box Sync/Documents/preNACC/",
                   "NACCulator ", DATE_CHAR, "/",
-                  "df_redcap_yes_nacc_no_", DATE_CHAR, ".csv")) %>% 
+                  "df_redcap_yes_nacc_no_", DATE_CHAR, ".csv"),
+           col_types = cols(.default = col_guess())) %>% 
   filter(redcap_event_name == "visit_1_arm_1" & visitnum == "001") %>%
   pull(ptid)
 
@@ -42,7 +46,7 @@ records_ivp <- records_ivp_raw %>% paste(collapse = ",")
 
 
 # GET REDCap DATA via API ----
-
+cat(green("Retrieving latest UDS 3 data via REDCap API...\n"))
 forms_ivp_raw <-
   c(
     "header"
@@ -143,6 +147,7 @@ df_ivp_block <- df_ivp_raw %>%
 
 
 # WRITE TO CSV ---- 
+cat(green("Writing relevant data frames to CSV...\n"))
 write_csv(df_ivp, 
           paste0("~/Box\ Sync/Documents/preNACC/NACCulator ", 
                  DATE_CHAR, "/NACC_UDS3_ivp_", DATE_CHAR, ".csv"), 
@@ -155,7 +160,7 @@ write_csv(df_ivp_block,
 
 
 # RUN NACCulator via TERMINAL COMMANDS ----
-
+cat(green("Executing NACCulator commands...\n"))
 ncltr_path <- "~/'Box Sync'/Documents/nacculator/"
 prenacc_path <- "~/'Box Sync'/Documents/preNACC/"
 
@@ -183,6 +188,8 @@ system(
            " > ", prenacc_path, 
            "'NACCulator ", DATE_CHAR, 
            "'/NACC_UDS3_ivp_", DATE_CHAR, ".txt"))
+
+cat(cyan("\nDone.\n\n"))
 
 
 ###@    #==--  :  --==#    @##==---==##@##==---==##@    #==--  :  --==#    @###
