@@ -27,8 +27,8 @@ suppressMessages( library(lubridate) )
 
 # USEFUL GLOBALS AND FUNCTIONS
 cat(green("Loading globals and helper functions...\n"))
-source("~/Box Sync/Documents/R_helpers/config.R")
-source("~/Box Sync/Documents/R_helpers/helpers.R")
+source("~/Box/Documents/R_helpers/config.R")
+source("~/Box/Documents/R_helpers/helpers.R")
 DATE_CHAR <- as.character(Sys.Date())
 
 # GET DATA ----
@@ -187,7 +187,7 @@ n <- nrow(df_redcap_yes_nacc_yes_1)
 cat(green("Writing relevant data frames to CSV...\n"))
 if (!dir.exists(paste0("./NACCulator ", DATE_CHAR))) {
   system(command = paste0("mkdir ",
-                          "~/'Box Sync'/Documents/preNACC/",
+                          "~/'Box'/Documents/preNACC/",
                           "'NACCulator ", DATE_CHAR, "'"))
 }
 

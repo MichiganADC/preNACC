@@ -27,15 +27,15 @@ suppressMessages( library(lubridate) )
 
 # USEFUL GLOBALS AND FUNCTIONS ----
 cat(green("Loading globals and helper functions...\n"))
-source("~/Box Sync/Documents/R_helpers/config.R")
-source("~/Box Sync/Documents/R_helpers/helpers.R")
+source("~/Box/Documents/R_helpers/config.R")
+source("~/Box/Documents/R_helpers/helpers.R")
 DATE_CHAR <- as.character(Sys.Date())
 
 
 # LOAD INITIAL VISIT RECORDS ----
 cat(green("Loading initial visit records...\n"))
 records_ivp_raw <-
-  read_csv(paste0("~/Box Sync/Documents/preNACC/",
+  read_csv(paste0("~/Box/Documents/preNACC/",
                   "NACCulator ", DATE_CHAR, "/",
                   "df_redcap_yes_nacc_no_", DATE_CHAR, ".csv"),
            col_types = cols(.default = col_guess())) %>% 
@@ -149,25 +149,25 @@ df_ivp_block <- df_ivp_raw %>%
 # WRITE TO CSV ---- 
 cat(green("Writing relevant data frames to CSV...\n"))
 write_csv(df_ivp, 
-          paste0("~/Box\ Sync/Documents/preNACC/NACCulator ", 
+          paste0("~/Box/Documents/preNACC/NACCulator ", 
                  DATE_CHAR, "/NACC_UDS3_ivp_", DATE_CHAR, ".csv"), 
           na = "")
 
 write_csv(df_ivp_block,
-          paste0("~/Box\ Sync/Documents/preNACC/NACCulator ", 
+          paste0("~/Box/Documents/preNACC/NACCulator ", 
                  DATE_CHAR, "/BLOCKED_NACC_UDS3_ivp_", DATE_CHAR, ".csv"), 
           na = "")
 
 
 # RUN NACCulator via TERMINAL COMMANDS ----
 cat(green("Executing NACCulator commands...\n"))
-ncltr_path <- "~/'Box Sync'/Documents/nacculator/"
-prenacc_path <- "~/'Box Sync'/Documents/preNACC/"
+ncltr_path <- "~/'Box'/Documents/nacculator/"
+prenacc_path <- "~/'Box'/Documents/preNACC/"
 
 system(
   command = 
     paste0("PYTHONPATH=", ncltr_path, 
-           " ", ncltr_path, "nacc/redcap2nacc.py", 
+           " python2 ", ncltr_path, "nacc/redcap2nacc.py", 
            " -f fixHeaders",
            " -meta ", ncltr_path, "nacculator_cfg_mich.ini",
            " < ", prenacc_path, 
@@ -180,7 +180,7 @@ system(
 system(
   command =
     paste0("PYTHONPATH=", ncltr_path,
-           " ", ncltr_path, "nacc/redcap2nacc.py",
+           " python2 ", ncltr_path, "nacc/redcap2nacc.py",
            " -ivp",
            " -file ", prenacc_path, 
            "'NACCulator ", DATE_CHAR, 
