@@ -109,6 +109,15 @@ df_fvp <- df_fvp_raw %>%
          , fvp_c2_complete == 2
          , fvp_d1_complete == 2
          , fvp_d2_complete == 2) %>% 
+  # Coales `fu_artype___X` fields to `fu_artype`
+  mutate(fu_artype = case_when(
+    fu_artype___1 == 1 ~ 1L,
+    fu_artype___2 == 1 ~ 2L,
+    fu_artype___3 == 3 ~ 3L,
+    fu_artype___9 == 9 ~ 9L,
+    TRUE ~ NA_integer_
+  )) %>%
+  select(-fu_artype___1, -fu_artype___2, -fu_artype___3, -fu_artype___9) %>% 
   get_visit_n(ptid, form_date, Inf)
 
 # Block records that shouldn't go to NACC b/c of unverified forms
