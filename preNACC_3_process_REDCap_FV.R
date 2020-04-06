@@ -29,15 +29,16 @@ suppressMessages( library(lubridate) )
 cat(green("Loading globals and helper functions...\n"))
 source("~/Box/Documents/R_helpers/config.R")
 source("~/Box/Documents/R_helpers/helpers.R")
-DATE_CHAR <- as.character(Sys.Date())
+today_char <- as.character(today())
+path_nacc_push <- paste0(here::here(), "/NACC_pushes")
+path_nacc_push_today <- paste0(path_nacc_push, "/push_", today_char)
 
 
 # LOAD FOLLOW-UP VISIT RECORDS ----
 cat(green("Loading follow-up visit records...\n"))
 records_fvp_raw <-
-  read_csv(paste0("~/Box/Documents/preNACC/",
-                  "NACCulator ", DATE_CHAR, "/",
-                  "df_redcap_yes_nacc_no_", DATE_CHAR, ".csv"),
+  read_csv(paste0(path_nacc_push_today,
+                  "/df_redcap_yes_nacc_no_", today_char, ".csv"),
            col_types = cols(.default = col_guess())) %>% 
   filter(redcap_event_name != "visit_1_arm_1" & visitnum != "001") %>%
   pull(ptid)
@@ -74,14 +75,14 @@ forms_fvp <- forms_fvp_raw %>% paste(collapse = ",")
 
 # Get the JSON
 json_fvp <- 
-  get_rc_data_api(uri     = REDCAP_API_URI,
-                  token   = REDCAP_API_TOKEN_UDS3n,
-                  forms   = forms_fvp,
-                  records = records_fvp,
-                  vp      = FALSE)
+  export_redcap_records(uri     = REDCAP_API_URI,
+                        token   = REDCAP_API_TOKEN_UDS3n,
+                        forms   = forms_fvp,
+                        records = records_fvp,
+                        vp      = FALSE)
 
 # Parse JSON to df
-df_fvp_raw <- jsonlite::fromJSON(json_fvp) %>% as_tibble() %>%  na_if("")
+df_fvp_raw <- jsonlite::fromJSON(json_fvp) %>% as_tibble() %>% na_if("")
 
 
 # CLEAN DATA ----
@@ -109,7 +110,18 @@ df_fvp <- df_fvp_raw %>%
          , fvp_c2_complete == 2
          , fvp_d1_complete == 2
          , fvp_d2_complete == 2) %>% 
-  # Coales `fu_artype___X` fields to `fu_artype`
+  # Coalesce A5 `fu_arthtype___X` fields to `fu_arthtype`
+  mutate(fu_arthtype = case_when(
+    fu_arthtype___1 == 1 ~ 1L,
+    fu_arthtype___2 == 1 ~ 2L,
+    fu_arthtype___3 == 3 ~ 3L,
+    fu_arthtype___9 == 9 ~ 9L,
+    TRUE ~ NA_integer_
+  )) %>%
+  select(-fu_arthtype___1, -fu_arthtype___2, 
+         -fu_arthtype___3, -fu_arthtype___9) %>% 
+  get_visit_n(ptid, form_date, Inf) %>% 
+  # Coalesce D2 `fu_artype___X` fields to `fu_artype`
   mutate(fu_artype = case_when(
     fu_artype___1 == 1 ~ 1L,
     fu_artype___2 == 1 ~ 2L,
@@ -165,45 +177,44 @@ df_fvp_block <- df_fvp_raw %>%
 # WRITE TO CSV ---- 
 cat(green("Writing relevant data frames to CSV...\n"))
 write_csv(df_fvp, 
-          paste0("~/Box/Documents/preNACC/NACCulator ", 
-                 DATE_CHAR, "/NACC_UDS3_fvp_", DATE_CHAR, ".csv"), 
+          paste0(path_nacc_push_today, 
+                 "/NACC_UDS3_fvp_", today_char, ".csv"), 
           na = "")
 
 write_csv(df_fvp_block,
-          paste0("~/Box/Documents/preNACC/NACCulator ", 
-                 DATE_CHAR, "/BLOCKED_NACC_UDS3_fvp_", DATE_CHAR, ".csv"), 
+          paste0(path_nacc_push_today, 
+                 "/BLOCKED_NACC_UDS3_fvp_", today_char, ".csv"), 
           na = "")
 
 
 # RUN NACCulator via TERMINAL COMMANDS ----
 cat(green("Executing NACCulator commands...\n"))
-ncltr_path <- "~/'Box'/Documents/nacculator/"
-prenacc_path <- "~/'Box'/Documents/preNACC/"
+ncltr_path <- "~/Box/Documents/nacculator"
 
 system(
   command = 
     paste0("PYTHONPATH=", ncltr_path,
-           " python2 ", ncltr_path, "nacc/redcap2nacc.py", 
+           " python2.7 ", ncltr_path, "/nacc/redcap2nacc.py", 
            " -f fixHeaders", 
-           " -meta ", ncltr_path, "nacculator_cfg_mich.ini", 
-           " < ", prenacc_path, 
-           "'NACCulator ", DATE_CHAR, 
-           "'/NACC_UDS3_fvp_", DATE_CHAR, ".csv",
-           " > ", prenacc_path, 
-           "'NACCulator ", DATE_CHAR, 
-           "'/NACC_UDS3_fvp_", DATE_CHAR, "_FILTERED.csv"))
+           " -meta ", ncltr_path, "/nacculator_cfg_mich.ini", 
+           " < ", 
+           path_nacc_push_today,
+           "/NACC_UDS3_fvp_", today_char, ".csv",
+           " > ", 
+           path_nacc_push_today,
+           "/NACC_UDS3_fvp_", today_char, "_FILTERED.csv"))
 
 system(
   command =
     paste0("PYTHONPATH=", ncltr_path,
-           " python2 ", ncltr_path, "nacc/redcap2nacc.py",
+           " python2.7 ", ncltr_path, "/nacc/redcap2nacc.py",
            " -fvp",
-           " -file ", prenacc_path, 
-           "'NACCulator ", DATE_CHAR, 
-           "'/NACC_UDS3_fvp_", DATE_CHAR, "_FILTERED.csv",
-           " > ", prenacc_path, 
-           "'NACCulator ", DATE_CHAR, 
-           "'/NACC_UDS3_fvp_", DATE_CHAR, ".txt"))
+           " -file ",
+           path_nacc_push_today,
+           "/NACC_UDS3_fvp_", today_char, "_FILTERED.csv",
+           " > ", 
+           path_nacc_push_today,
+           "/NACC_UDS3_fvp_", today_char, ".txt"))
 
 cat(cyan("\nDone.\n\n"))
 

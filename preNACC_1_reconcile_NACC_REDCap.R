@@ -29,7 +29,11 @@ suppressMessages( library(lubridate) )
 cat(green("Loading globals and helper functions...\n"))
 source("~/Box/Documents/R_helpers/config.R")
 source("~/Box/Documents/R_helpers/helpers.R")
-DATE_CHAR <- as.character(Sys.Date())
+today_char <- as.character(today())
+path_nacc_a1 <- paste0(here::here(), "/NACC_A1_data")
+path_nacc_push <- paste0(here::here(), "/NACC_pushes")
+path_nacc_push_today <- paste0(path_nacc_push, "/push_", today_char)
+
 
 # GET DATA ----
 
@@ -45,9 +49,9 @@ DATE_CHAR <- as.character(Sys.Date())
 # Find latest NACC Form A1 CSV
 cat(green("Retrieving latest NACC Form A1 CSV...\n"))
 df_nacc_a1_csvs <- 
-  file.info(paste0("./NACC_A1_data/", list.files("./NACC_A1_data/"))) %>% 
+  file.info(paste0(path_nacc_a1, "/", list.files(path_nacc_a1))) %>% 
   as_tibble(rownames = "filepath") %>%
-  filter(!isdir) %>% 
+  filter(isdir == "FALSE") %>% 
   select(filepath, ctime)
 
 df_nacc_a1_csvs_latest <- 
@@ -57,7 +61,7 @@ df_nacc_a1_csvs_latest <-
   slice(1L)
 
 # Throw a warning if the latest NACC Form A1 CSV wasn't downloaded today
-if (df_nacc_a1_csvs_latest[["cdate"]] != Sys.Date()) {
+if (df_nacc_a1_csvs_latest[["cdate"]] != today_char) {
   warning(
     bold(
       cyan(
@@ -105,10 +109,10 @@ fields_u3_raw <-
 fields_u3 <- fields_u3_raw %>% paste(collapse = ",")
 
 json_u3 <- 
-  get_rc_data_api(uri    = REDCAP_API_URI,
-                  token  = REDCAP_API_TOKEN_UDS3n,
-                  fields = fields_u3,
-                  vp     = FALSE)
+  export_redcap_records(uri    = REDCAP_API_URI,
+                        token  = REDCAP_API_TOKEN_UDS3n,
+                        fields = fields_u3,
+                        vp     = FALSE)
 
 df_u3 <- jsonlite::fromJSON(json_u3) %>% as_tibble() %>% na_if("")
 
@@ -119,7 +123,7 @@ df_u3_cln <- df_u3 %>%
   # Clean out DDE records (__1, __2)
   filter(str_detect(ptid, "^UM\\d{8}$")) %>%
   # Coerce `form_date` to date
-  mutate(form_date = lubridate::as_date(form_date)) %>% 
+  mutate(form_date = as_date(form_date)) %>% 
   # Clean out records missing `form_date`s
   filter(!is.na(form_date)) %>%
   # Coerce `_complete` fields to integer
@@ -185,10 +189,8 @@ n <- nrow(df_redcap_yes_nacc_yes_1)
 
 # WRITE DFs TO CSV ----
 cat(green("Writing relevant data frames to CSV...\n"))
-if (!dir.exists(paste0("./NACCulator ", DATE_CHAR))) {
-  system(command = paste0("mkdir ",
-                          "~/'Box'/Documents/preNACC/",
-                          "'NACCulator ", DATE_CHAR, "'"))
+if (!dir.exists(path_nacc_push_today)) {
+  system(command = paste0("mkdir ", path_nacc_push_today))
 }
 
 # If there are records in `df_redcap_no_nacc_yes`, 
@@ -197,16 +199,16 @@ if (nrow(df_redcap_no_nacc_yes) != 0L) {
   warning(paste0("There are records in NACC that are NOT in REDCap UDS 3.\n",
                  "Resolve these discrepancies before doing a NACC push.\n"))
   write_csv(df_redcap_no_nacc_yes, 
-            paste0("./NACCulator ", DATE_CHAR, "/", 
-                   "df_redcap_no_nacc_yes_", DATE_CHAR, ".csv"), 
+            paste0(path_nacc_push_today,
+                   "/df_redcap_no_nacc_yes_", today_char, ".csv"), 
             na = "")
 }
 
 # Write CSV of participant-visit records that need to be uploaded to NACC
 # This CSV will be used as a source of records by 
 write_csv(df_redcap_yes_nacc_no, 
-          paste0("./NACCulator ", DATE_CHAR, "/",
-                 "df_redcap_yes_nacc_no_", DATE_CHAR, ".csv"), 
+          paste0(path_nacc_push_today,
+                 "/df_redcap_yes_nacc_no_", today_char, ".csv"), 
           na = "")
 
 cat(cyan("\nDone.\n\n"))
