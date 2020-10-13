@@ -40,7 +40,9 @@ records_fvp_raw <-
   read_csv(paste0(path_nacc_push_today,
                   "/df_redcap_yes_nacc_no_", today_char, ".csv"),
            col_types = cols(.default = col_guess())) %>% 
-  filter(redcap_event_name != "visit_1_arm_1" & visitnum != "001") %>%
+  filter(redcap_event_name != "visit_1_arm_1",
+         visitnum != "001",
+         fvp_z1_complete == "2") %>%
   pull(ptid)
 
 records_fvp <- records_fvp_raw %>% paste(collapse = ",")
@@ -114,8 +116,8 @@ df_fvp <- df_fvp_raw %>%
   mutate(fu_arthtype = case_when(
     fu_arthtype___1 == 1 ~ 1L,
     fu_arthtype___2 == 1 ~ 2L,
-    fu_arthtype___3 == 3 ~ 3L,
-    fu_arthtype___9 == 9 ~ 9L,
+    fu_arthtype___3 == 1 ~ 3L,
+    fu_arthtype___9 == 1 ~ 9L,
     TRUE ~ NA_integer_
   )) %>%
   select(-fu_arthtype___1, -fu_arthtype___2, 
@@ -125,8 +127,8 @@ df_fvp <- df_fvp_raw %>%
   mutate(fu_artype = case_when(
     fu_artype___1 == 1 ~ 1L,
     fu_artype___2 == 1 ~ 2L,
-    fu_artype___3 == 3 ~ 3L,
-    fu_artype___9 == 9 ~ 9L,
+    fu_artype___3 == 1 ~ 3L,
+    fu_artype___9 == 1 ~ 9L,
     TRUE ~ NA_integer_
   )) %>%
   select(-fu_artype___1, -fu_artype___2, -fu_artype___3, -fu_artype___9) %>% 
@@ -191,30 +193,24 @@ write_csv(df_fvp_block,
 cat(green("Executing NACCulator commands...\n"))
 ncltr_path <- "~/Box/Documents/nacculator"
 
-system(
-  command = 
-    paste0("PYTHONPATH=", ncltr_path,
-           " python2.7 ", ncltr_path, "/nacc/redcap2nacc.py", 
-           " -f fixHeaders", 
-           " -meta ", ncltr_path, "/nacculator_cfg_mich.ini", 
-           " < ", 
-           path_nacc_push_today,
-           "/NACC_UDS3_fvp_", today_char, ".csv",
-           " > ", 
-           path_nacc_push_today,
-           "/NACC_UDS3_fvp_", today_char, "_FILTERED.csv"))
+ncltr_cmd_1 <- paste0(
+  "PYTHONPATH=", ncltr_path, " ",
+  "python3 ", ncltr_path, "/nacc/redcap2nacc.py ",
+  "-f fixHeaders ",
+  "-meta ", ncltr_path, "/nacculator_cfg_mich.ini ",
+  "< ", path_nacc_push_today, "/NACC_UDS3_fvp_", today_char, ".csv",
+  "> ", path_nacc_push_today, "/NACC_UDS3_fvp_", today_char, "_FILTERED.csv"
+)
+system(ncltr_cmd_1)
 
-system(
-  command =
-    paste0("PYTHONPATH=", ncltr_path,
-           " python2.7 ", ncltr_path, "/nacc/redcap2nacc.py",
-           " -fvp",
-           " -file ",
-           path_nacc_push_today,
-           "/NACC_UDS3_fvp_", today_char, "_FILTERED.csv",
-           " > ", 
-           path_nacc_push_today,
-           "/NACC_UDS3_fvp_", today_char, ".txt"))
+ncltr_cmd_2 <- paste0(
+  "PYTHONPATH=", ncltr_path, " ",
+  "python3 ", ncltr_path, "/nacc/redcap2nacc.py ",
+  "-fvp ",
+  "-file ", path_nacc_push_today, "/NACC_UDS3_fvp_", today_char, "_FILTERED.csv",
+  "> ", path_nacc_push_today, "/NACC_UDS3_fvp_", today_char, ".txt"
+)
+system(ncltr_cmd_2)
 
 cat(cyan("\nDone.\n\n"))
 

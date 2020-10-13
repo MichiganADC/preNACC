@@ -181,9 +181,9 @@ df_redcap_yes_nacc_yes_2 <-
             by = c("ptid", "form_date", "visitnum")) %>% 
   select(ptid, form_date, visitnum) %>% 
   arrange(ptid, form_date, visitnum)
-# Verify that these match
-n <- nrow(df_redcap_yes_nacc_yes_1)
-# identical(head(df_redcap_yes_nacc_yes_1, n), 
+# # Verify that these match
+# n <- nrow(df_redcap_yes_nacc_yes_1)
+# identical(head(df_redcap_yes_nacc_yes_1, n),
 #           head(df_redcap_yes_nacc_yes_2, n))
 
 
